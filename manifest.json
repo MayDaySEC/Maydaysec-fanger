@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "URL Defanger",
+  "name": "URL De/fanger by Maydaysec.io",
   "version": "1.0",
   "description": "Defangs URLs on web pages.",
   "permissions": ["activeTab"],
