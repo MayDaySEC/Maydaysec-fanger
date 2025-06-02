@@ -1,0 +1,267 @@
+body {
+  width: 400px;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #3498db;
+}
+
+.header h2 {
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  transition: color 0.3s;
+}
+
+body.dark-mode .header h2 {
+  color: #ecf0f1;
+}
+
+.site-link {
+  display: inline-block;
+  color: #3498db;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.site-link:hover {
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+}
+
+body.dark-mode .site-link {
+  color: #2980b9;
+}
+
+body.dark-mode .site-link:hover {
+  background-color: #2980b9;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.mode-toggle button {
+  padding: 8px 16px;
+  border: 2px solid #3498db;
+  background: transparent;
+  color: #3498db;
+  border-radius: 20px;
+  transition: all 0.3s;
+}
+
+.mode-toggle button.active {
+  background: #3498db;
+  color: white;
+}
+
+body.dark-mode .mode-toggle button {
+  border-color: #2980b9;
+  color: #2980b9;
+}
+
+body.dark-mode .mode-toggle button.active {
+  background: #2980b9;
+  color: white;
+}
+
+.url-section {
+  transition: opacity 0.3s;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  color: #34495e;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+body.dark-mode label {
+  color: #bdc3c7;
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.3s;
+  background-color: white;
+  color: #2c3e50;
+  resize: vertical;
+}
+
+body.dark-mode input[type="text"],
+body.dark-mode textarea {
+  background-color: #2c2c2c;
+  border-color: #444;
+  color: #ecf0f1;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+#defangButton,
+#batchDefangButton {
+  background-color: #e74c3c;
+  color: white;
+}
+
+#defangButton:hover,
+#batchDefangButton:hover {
+  background-color: #c0392b;
+}
+
+#fangButton,
+#batchFangButton {
+  background-color: #2ecc71;
+  color: white;
+}
+
+#fangButton:hover,
+#batchFangButton:hover {
+  background-color: #27ae60;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+#copyButton {
+  background-color: #3498db;
+  color: white;
+  flex: 2;
+}
+
+#copyButton:hover {
+  background-color: #2980b9;
+}
+
+#clearButton {
+  background-color: #95a5a6;
+  color: white;
+  flex: 1;
+}
+
+#clearButton:hover {
+  background-color: #7f8c8d;
+}
+
+.status-message {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  text-align: center;
+  display: none;
+  transition: all 0.3s;
+}
+
+.success {
+  background-color: #d4edda;
+  color: #155724;
+  display: block;
+}
+
+body.dark-mode .success {
+  background-color: #1e4620;
+  color: #d4edda;
+}
+
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  display: block;
+}
+
+body.dark-mode .error {
+  background-color: #462020;
+  color: #f8d7da;
+}
+
+.shortcuts-info {
+  text-align: center;
+  margin-top: 10px;
+  color: #7f8c8d;
+  font-size: 12px;
+}
+
+body.dark-mode .shortcuts-info {
+  color: #95a5a6;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin: -8px 0 0 -8px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
