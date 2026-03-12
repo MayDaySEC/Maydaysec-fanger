@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Maydaysec.io URL De/fanger",
-  "version": "3",
+  "version": "3.1",
   "description": "Defangs and fangs URLs and IPs on web pages.",
   "permissions": [
     "activeTab",
