@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Listen for system theme changes
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
-  
+
   // Initial theme setup
   updateTheme();
 
@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
     statusMessage.className = 'status-message ' + (isError ? 'error' : 'success');
     setTimeout(() => {
       statusMessage.className = 'status-message';
+      statusMessage.textContent = '';
     }, 3000);
   }
 
@@ -51,6 +52,17 @@ document.addEventListener('DOMContentLoaded', function() {
     button.classList.toggle('loading', isLoading);
     button.disabled = isLoading;
   }
+
+  // --- Detection helpers ---
+
+  // IPv4: 4 groups of 1-3 digits separated by dots
+  const IPV4_REGEX = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+
+  // IPv6: simplified check — contains colons and hex groups
+  const IPV6_REGEX = /^[0-9a-fA-F:]+:[0-9a-fA-F:]+$/;
+
+  // Defanged IPv4 with [.] separators
+  const DEFANGED_IPV4_REGEX = /^(\d{1,3})\[\.\](\d{1,3})\[\.\](\d{1,3})\[\.\](\d{1,3})$/;
 
   function isValidUrl(url) {
     try {
@@ -61,34 +73,95 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function isValidIpv4(ip) {
+    const m = IPV4_REGEX.exec(ip);
+    if (!m) return false;
+    return m.slice(1).every(octet => parseInt(octet, 10) <= 255);
+  }
+
+  function isValidIpv6(ip) {
+    return IPV6_REGEX.test(ip);
+  }
+
+  function isDefangedIpv4(str) {
+    const m = DEFANGED_IPV4_REGEX.exec(str);
+    if (!m) return false;
+    return m.slice(1).every(octet => parseInt(octet, 10) <= 255);
+  }
+
+  function looksDefanged(str) {
+    return str.includes('[.]') || str.includes('[:]') || str.includes('[at]') || str.includes('[://]');
+  }
+
+  // --- Core defang/fang logic ---
+
   function defangUrl(url) {
     return url
-      .replace(/\./g, '[.]')
-      .replace(/:/g, '[:]')
-      .replace(/\/\//g, ':\\u200B/')
-      .replace(/@/g, '[at]');
+      .replace(/\./g, '[.]')        // dots → [.]
+      .replace(/:\/\//g, '[://]')   // :// → [://]  (must come before : replacement)
+      .replace(/@/g, '[at]');       // @ → [at]
   }
 
   function fangUrl(url) {
     return url
-      .replace(/\[\.\]/g, '.')
-      .replace(/\[:\]/g, ':')
-      .replace(/\\u200B/g, '')
-      .replace(/\[at\]/g, '@');
+      .replace(/\[at\]/g, '@')      // [at] → @
+      .replace(/\[:\/\/\]/g, '://') // [://] → ://
+      .replace(/\[\.\]/g, '.')      // [.] → .
+      .replace(/\[:\]/g, ':');      // [:] → :  (legacy compat)
   }
 
-  async function processUrl(action, url) {
-    if (!url) {
-      showStatus('Please enter a URL', true);
-      return null;
-    }
-    if (!isValidUrl(url)) {
-      showStatus('Invalid URL format', true);
+  function defangIp(ip) {
+    // For IPv4 and IPv6, replace dots/colons
+    return ip
+      .replace(/\./g, '[.]')
+      .replace(/:/g, '[:]');
+  }
+
+  function fangIp(defangedIp) {
+    return defangedIp
+      .replace(/\[\.\]/g, '.')
+      .replace(/\[:\]/g, ':');
+  }
+
+  // --- processUrl: handles URLs, raw IPs, and already-defanged strings ---
+
+  function processUrl(action, input) {
+    if (!input) {
+      showStatus('Please enter a URL or IP address', true);
       return null;
     }
 
     try {
-      return action === 'defang' ? defangUrl(url) : fangUrl(url);
+      if (action === 'defang') {
+        // Already defanged? skip
+        if (looksDefanged(input)) {
+          showStatus('Input appears already defanged', true);
+          return null;
+        }
+        // Raw IPv4?
+        if (isValidIpv4(input)) return defangIp(input);
+        // Raw IPv6?
+        if (isValidIpv6(input)) return defangIp(input);
+        // Full URL?
+        if (isValidUrl(input)) return defangUrl(input);
+        showStatus('Invalid URL or IP format', true);
+        return null;
+      } else {
+        // Fang mode — accept defanged strings without strict validation
+        if (looksDefanged(input) || isDefangedIpv4(input)) {
+          return fangUrl(input); // fangUrl also handles [.] and [:]
+        }
+        // If it's already a valid URL or IP, nothing to fang
+        if (isValidUrl(input) || isValidIpv4(input) || isValidIpv6(input)) {
+          showStatus('Input does not appear defanged', true);
+          return null;
+        }
+        // Try fanging anyway (loose mode for partial defanged strings)
+        const fanged = fangUrl(input);
+        if (fanged !== input) return fanged;
+        showStatus('Nothing to fang — no defang patterns found', true);
+        return null;
+      }
     } catch (error) {
       showStatus(`Error: ${error.message}`, true);
       return null;
@@ -96,42 +169,50 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function processBatch(action) {
-    const urls = batchInput.value.trim().split('\n').filter(url => url.trim());
-    if (urls.length === 0) {
-      showStatus('Please enter at least one URL', true);
+    const lines = batchInput.value.trim().split('\n').filter(l => l.trim());
+    if (lines.length === 0) {
+      showStatus('Please enter at least one URL or IP', true);
       return;
     }
 
-    setLoading(action === 'defang' ? batchDefangButton : batchFangButton, true);
-    
+    const btn = action === 'defang' ? batchDefangButton : batchFangButton;
+    setLoading(btn, true);
+
     try {
       const results = [];
-      for (const url of urls) {
-        const result = await processUrl(action, url.trim());
-        if (result) {
+      let skipped = 0;
+      for (const line of lines) {
+        const result = processUrl(action, line.trim());
+        if (result !== null) {
           results.push(result);
+        } else {
+          // Keep original line with a comment so user knows it was skipped
+          results.push(`# SKIPPED: ${line.trim()}`);
+          skipped++;
         }
       }
       batchOutput.value = results.join('\n');
-      showStatus(`Processed ${results.length} URLs successfully!`);
+      const successCount = lines.length - skipped;
+      showStatus(`Processed ${successCount} of ${lines.length} items.${skipped > 0 ? ` ${skipped} skipped.` : ''}`);
     } finally {
-      setLoading(action === 'defang' ? batchDefangButton : batchFangButton, false);
+      setLoading(btn, false);
     }
   }
 
-  // Single URL processing
+  // Single URL/IP processing
   async function handleSingleUrl(action) {
-    const url = urlInput.value.trim();
-    setLoading(action === 'defang' ? defangButton : fangButton, true);
-    
+    const input = urlInput.value.trim();
+    const btn = action === 'defang' ? defangButton : fangButton;
+    setLoading(btn, true);
+
     try {
-      const result = await processUrl(action, url);
-      if (result) {
+      const result = processUrl(action, input);
+      if (result !== null) {
         outputUrl.value = result;
-        showStatus(`URL ${action}ed successfully!`);
+        showStatus(`${action === 'defang' ? 'Defanged' : 'Fanged'} successfully!`);
       }
     } finally {
-      setLoading(action === 'defang' ? defangButton : fangButton, false);
+      setLoading(btn, false);
     }
   }
 
@@ -146,19 +227,33 @@ document.addEventListener('DOMContentLoaded', function() {
       await navigator.clipboard.writeText(text);
       showStatus('Copied to clipboard!');
     } catch (error) {
-      showStatus('Failed to copy to clipboard', true);
+      // Fallback for environments where clipboard API is restricted
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showStatus('Copied to clipboard!');
+      } catch {
+        showStatus('Failed to copy to clipboard', true);
+      }
     }
   }
 
   copyButton.addEventListener('click', async function() {
     const isBatchMode = batchMode.classList.contains('active');
     const text = isBatchMode ? batchOutput.value : outputUrl.value;
-    
+
     if (!text) {
       showStatus('No content to copy', true);
       return;
     }
-    
+
     setLoading(copyButton, true);
     await copyToClipboard(text);
     setLoading(copyButton, false);

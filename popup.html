@@ -3,7 +3,7 @@
 <head>
   <title>Maydaysec.io URL De/fanger</title>
   <link rel="stylesheet" href="popup.css">
-  <script src="popup.js"></script>
+  <script src="popup.js" defer></script>
 </head>
 <body>
   <div class="header">
@@ -12,19 +12,19 @@
   </div>
 
   <div class="mode-toggle">
-    <button id="singleMode" class="active">Single URL</button>
-    <button id="batchMode">Batch URLs</button>
+    <button id="singleMode" class="active">Single</button>
+    <button id="batchMode">Batch</button>
   </div>
-  
+
   <div id="singleUrlSection" class="url-section">
     <div class="input-group">
-      <label for="urlInput">Enter URL:</label>
-      <input type="text" id="urlInput" placeholder="https://example.com">
+      <label for="urlInput">Enter URL or IP:</label>
+      <input type="text" id="urlInput" placeholder="https://example.com or 192.168.1.1">
     </div>
 
     <div class="button-group">
-      <button id="defangButton">Defang URL</button>
-      <button id="fangButton">Fang URL</button>
+      <button id="defangButton">Defang</button>
+      <button id="fangButton">Fang</button>
     </div>
 
     <div class="input-group">
@@ -35,8 +35,8 @@
 
   <div id="batchUrlSection" class="url-section" style="display: none;">
     <div class="input-group">
-      <label for="batchInput">Enter URLs (one per line):</label>
-      <textarea id="batchInput" rows="5" placeholder="https://example1.com&#10;https://example2.com"></textarea>
+      <label for="batchInput">Enter URLs / IPs (one per line):</label>
+      <textarea id="batchInput" rows="5" placeholder="https://example1.com&#10;192.168.1.1&#10;2001:db8::1"></textarea>
     </div>
 
     <div class="button-group">
@@ -54,11 +54,11 @@
     <button id="copyButton">Copy to Clipboard</button>
     <button id="clearButton">Clear All</button>
   </div>
-  
+
   <div id="statusMessage" class="status-message"></div>
 
   <div class="shortcuts-info">
-    <small>Tip: Press Ctrl/Cmd + Enter to defang</small>
+    <small>Tip: Press Ctrl/Cmd + Enter to defang &bull; Supports URLs, IPv4 &amp; IPv6</small>
   </div>
 </body>
 </html>

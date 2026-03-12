@@ -3,30 +3,31 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     const links = document.getElementsByTagName('a');
     for (let i = 0; i < links.length; i++) {
       const link = links[i];
-      const href = link.href;
+      const href = link.getAttribute('href');
+      if (!href) continue;
       if (href.includes('://')) {
-        const defangedHref = href
+        const defanged = href
           .replace(/\./g, '[.]')
-          .replace(/:/g, '[:]')
-          .replace(/\/\//g, ':\\u200B/')
+          .replace(/:\/\//g, '[://]')
           .replace(/@/g, '[at]');
-        link.setAttribute('href', defangedHref);
-        link.textContent = defangedHref;
+        link.setAttribute('href', defanged);
+        link.textContent = defanged;
       }
     }
   } else if (message.action === 'fang_urls') {
     const links = document.getElementsByTagName('a');
     for (let i = 0; i < links.length; i++) {
       const link = links[i];
-      const href = link.href;
-      if (href.includes(':\\u200B/')) {
-        const fangedHref = href
+      const href = link.getAttribute('href');
+      if (!href) continue;
+      if (href.includes('[.]') || href.includes('[://]') || href.includes('[:]')) {
+        const fanged = href
+          .replace(/\[at\]/g, '@')
+          .replace(/\[:\/\/\]/g, '://')
           .replace(/\[\.\]/g, '.')
-          .replace(/\[:\]/g, ':')
-          .replace(/\\u200B/g, '')
-          .replace(/\[at\]/g, '@');
-        link.setAttribute('href', fangedHref);
-        link.textContent = fangedHref;
+          .replace(/\[:\]/g, ':');
+        link.setAttribute('href', fanged);
+        link.textContent = fanged;
       }
     }
   }
